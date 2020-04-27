@@ -1,27 +1,12 @@
+import { Avatar, Flex, Menu, MenuButton, MenuItem, MenuList } from '@chakra-ui/core'
 import React, { FC, useContext } from 'react'
-import { Box, Button, Flex, Avatar } from '@chakra-ui/core'
 import { Link } from 'react-router-dom'
 import UserContext from '../context/userContext'
-import {
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
-  MenuGroup,
-  MenuDivider,
-  MenuOptionGroup,
-  MenuItemOption,
-} from '@chakra-ui/core'
 import { auth } from '../firebaseApp'
+import FriendRequests from './FriendRequests'
+import GameChallenges from './GameChallenges'
 
-export interface HeaderProps {
-  onStartMatchmaking: () => void
-  onStopMatchmaking: () => void
-  isMatchmaking: boolean
-  time: number
-}
-
-const Header: FC<HeaderProps> = ({ onStopMatchmaking, onStartMatchmaking, isMatchmaking, time }) => {
+const Header: FC = () => {
   const { user } = useContext(UserContext)
 
   const signOut = () => {
@@ -29,25 +14,35 @@ const Header: FC<HeaderProps> = ({ onStopMatchmaking, onStartMatchmaking, isMatc
   }
 
   return (
-    <Flex px={4} align="center" justify="space-between" bg="gray.800" w="100%" h="4rem">
+    <Flex
+      px={4}
+      align="center"
+      justify="space-between"
+      bg="purple.800"
+      borderBottomWidth="2px"
+      borderBottomColor="purple.900"
+      w="100%"
+      h="5rem"
+    >
       <Link to="/">Bombergrid</Link>
-      {!isMatchmaking ? (
-        <Button variantColor="green" onClick={onStartMatchmaking}>
-          Search for opponent
-        </Button>
-      ) : (
-        <Button variantColor="green" onClick={onStopMatchmaking}>
-          Searching for opponent ... {time}
-        </Button>
-      )}
-      <Menu>
-        <MenuButton>
-          <Avatar name={user?.displayName ?? undefined} />
-        </MenuButton>
-        <MenuList>
-          <MenuItem onClick={signOut}>Sign out</MenuItem>
-        </MenuList>
-      </Menu>
+      <Flex>
+        <FriendRequests />
+        <GameChallenges />
+        <Menu>
+          <MenuButton>
+            <Avatar size="sm" name={user?.displayName ?? undefined} />
+          </MenuButton>
+          <MenuList border="none" boxShadow="md" bg="purple.500">
+            <MenuItem
+              _hover={{ backgroundColor: 'purple.600' }}
+              _focus={{ backgroundColor: 'purple.600' }}
+              onClick={signOut}
+            >
+              Sign out
+            </MenuItem>
+          </MenuList>
+        </Menu>
+      </Flex>
     </Flex>
   )
 }

@@ -4,5 +4,49 @@ service cloud.firestore {
     match /{document=**} {
       allow read, write: if false;
     }
+    
+    match /users/{document=**} {
+    	allow read: if resource.id == request.auth.uid
+    }
+    
+    match /users/{userId}/{document=**} {
+    	allow read: if userId == request.auth.uid
+    }
+    
+    match /public-users/{document=**} {
+    	allow read: if request.auth.uid != null
+    }
+    
+    match /games/{document=**} {
+    	allow read: if request.auth.uid in resource.data.players
+      allow update: if isOnlyUpdatingPlacement() && isOnlyUpdatingOwnPlacmentKey()
+    }
+    
+    match /placements/{document=**} {
+    	allow read: if false
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly([request.auth.uid])
+    }
+    
+    match /matchmaking/{document=**} {
+    	allow read: if resource.id == request.auth.uid
+      allow create: if request.resource.id == request.auth.uid && !exists(/databases/$(database)/documents/matchmaking/$(request.auth.uid))
+      allow delete: if resource.id == request.auth.uid
+    }
   }
+}
+
+function isOnlyUpdatingPlacement() {
+  return request.resource.data.diff(resource.data).affectedKeys().hasOnly(["hasPlaced"])
+}
+
+function isOnlyUpdatingOwnPlacmentKey() {
+  return request.resource.data.get("hasPlaced", []).size() > resource.data.get("hasPlaced", []).size() ? isOneMore(request.resource.data.get("hasPlaced", []), resource.data.get("hasPlaced", [])) : isOneLess(request.resource.data.get("hasPlaced", []), resource.data.get("hasPlaced", []))
+}
+
+function isOneMore(newPlacements, oldPlacements) {
+  return ((newPlacements.size() - oldPlacements.size()) == 1) && newPlacements.hasAll([request.auth.uid]) && !oldPlacements.hasAny([request.auth.uid])
+}
+
+function isOneLess(newPlacements, oldPlacements) {
+  return ((newPlacements.size() - newPlacements.size()) == 1) && !newPlacements.hasAny([request.auth.uid]) && oldPlacements.hasAll([request.auth.uid])
 }

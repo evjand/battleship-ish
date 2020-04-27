@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions'
 import * as admin from 'firebase-admin'
 import * as shortid from 'shortid'
+import { uniqueNamesGenerator, Config, adjectives, animals } from 'unique-names-generator'
 const app = admin.initializeApp()
 
 const firestore = app.firestore()
@@ -63,14 +64,8 @@ exports.trySquare = functions.region('europe-west1').https.onCall((data, context
 
       return transaction
         .update(firestore.collection('games').doc(gameId), fieldsToUpdate)
-        .update(firestore.collection('users').doc(uid).collection('games').doc(gameId), {
-          winner: gameIsWon ? uid : null,
-          currentPlayer: opponent,
-        })
-        .update(firestore.collection('users').doc(opponent).collection('games').doc(gameId), {
-          winner: gameIsWon ? uid : null,
-          currentPlayer: opponent,
-        })
+        .update(firestore.collection('users').doc(uid).collection('games').doc(gameId), fieldsToUpdate)
+        .update(firestore.collection('users').doc(opponent).collection('games').doc(gameId), fieldsToUpdate)
         .create(firestore.collection('games').doc(gameId).collection('turns').doc(), {
           created: admin.firestore.FieldValue.serverTimestamp(),
           ...fieldsToUpdate,
@@ -82,6 +77,73 @@ exports.trySquare = functions.region('europe-west1').https.onCall((data, context
         gameIsWon,
       }
     })
+})
+
+exports.sendFriendRequest = functions.region('europe-west1').https.onCall(async (data, context) => {
+  const { userId: friendId } = data
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User is not signed in')
+  const { uid } = context.auth
+
+  await firestore.runTransaction(async (transaction) => {
+    // Fetch both users
+    const meDoc = await transaction.get(firestore.collection('users').doc(uid))
+
+    // Check if I exist
+    if (!meDoc.exists) throw new functions.https.HttpsError('not-found', 'User is not found')
+    const meData = meDoc.data()!
+
+    // Check if current players turn
+    // Will also secure any unauthorized activity
+    if (meData.friends.includes(friendId))
+      throw new functions.https.HttpsError('invalid-argument', "You're already friends")
+
+    return transaction.create(firestore.collection('users').doc(friendId).collection('friend-requests').doc(uid), {
+      displayName: meData.displayName,
+      userId: uid,
+    })
+  })
+  return {
+    result: 'Friends request sent',
+  }
+})
+
+exports.acceptFriendRequest = functions.region('europe-west1').https.onCall(async (data, context) => {
+  const { userId: friendId } = data
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User is not signed in')
+  const { uid } = context.auth
+
+  await firestore.runTransaction(async (transaction) => {
+    // Fetch both users
+    const meDocPromise = transaction.get(firestore.collection('users').doc(uid))
+    const friendDocPromise = transaction.get(firestore.collection('users').doc(friendId))
+    const [meDoc, friendDoc] = await Promise.all([meDocPromise, friendDocPromise])
+
+    // Check if both users exist
+    if (!meDoc.exists && !friendDoc.exists) throw new functions.https.HttpsError('not-found', 'User is not found')
+    const meData = meDoc.data()!
+    const friendData = friendDoc.data()!
+
+    // Check if current players turn
+    // Will also secure any unauthorized activity
+    if (meData.friends.includes(friendId))
+      throw new functions.https.HttpsError('invalid-argument', "You're already friends")
+
+    return transaction
+      .update(firestore.collection('users').doc(uid), { friends: [...meData.friends, friendId] })
+      .update(firestore.collection('users').doc(friendId), { friends: [...friendData.friends, uid] })
+      .create(firestore.collection('users').doc(uid).collection('friends').doc(friendId), {
+        displayName: friendData.displayName,
+        userId: friendId,
+      })
+      .create(firestore.collection('users').doc(friendId).collection('friends').doc(uid), {
+        displayName: meData.displayName,
+        userId: uid,
+      })
+      .delete(firestore.collection('users').doc(uid).collection('friend-requests').doc(friendId))
+  })
+  return {
+    result: 'Friends request sent',
+  }
 })
 
 exports.matchPlayers = functions
@@ -153,3 +215,112 @@ exports.placementAdded = functions
       })
     })
   })
+
+exports.onUserCreate = functions
+  .region('europe-west1')
+  .auth.user()
+  .onCreate(async (user) => {
+    const customConfig: Config = {
+      dictionaries: [adjectives, animals],
+      separator: ' ',
+      length: 2,
+      style: 'capital',
+    }
+    const shortName: string = uniqueNamesGenerator(customConfig)
+    const friendCode = shortid()
+    try {
+      await firestore
+        .collection('users')
+        .doc(user.uid)
+        .create({
+          displayName: user.displayName || shortName,
+          friendCode,
+          friends: [],
+        })
+      await firestore
+        .collection('public-users')
+        .doc(friendCode)
+        .create({
+          displayName: user.displayName || shortName,
+          userId: user.uid,
+        })
+    } catch (error) {
+      throw new functions.https.HttpsError('invalid-argument', 'I fucked up')
+    }
+  })
+
+exports.sendChallenge = functions.region('europe-west1').https.onCall(async (data, context) => {
+  const { userId: friendId } = data
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User is not signed in')
+  const { uid } = context.auth
+
+  await firestore.runTransaction(async (transaction) => {
+    // Fetch userdata for user
+    const meDataDoc = await transaction.get(firestore.collection('users').doc(uid))
+    const meData = meDataDoc.data()!
+    // Check if friend already has a challenge from user
+    const friendDoc = await transaction.get(
+      firestore.collection('users').doc(friendId).collection('challenges').doc(uid)
+    )
+
+    // Check if I exist
+    if (friendDoc.exists)
+      throw new functions.https.HttpsError('failed-precondition', 'You already have sent this user a challenge')
+
+    return transaction.create(firestore.collection('users').doc(friendId).collection('challenges').doc(uid), {
+      displayName: meData.displayName,
+      userId: uid,
+    })
+  })
+  return {
+    result: 'Game challenge sent',
+  }
+})
+
+exports.acceptChallenge = functions.region('europe-west1').https.onCall(async (data, context) => {
+  const { userId: friendId } = data
+  if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'User is not signed in')
+  const { uid } = context.auth
+
+  await firestore.runTransaction(async (transaction) => {
+    const player1 = friendId
+    const player2 = uid
+
+    // Fetch both users
+    const player1Promise = transaction.get(firestore.collection('users').doc(player1))
+    const player2Promise = transaction.get(firestore.collection('users').doc(player2))
+    const [player1Doc, player2Doc] = await Promise.all([player1Promise, player2Promise])
+
+    // Check if both users exist
+    if (!player1Doc.exists && !player2Doc.exists) throw new functions.https.HttpsError('not-found', 'User is not found')
+    const player1Data = player1Doc.data()!
+    const player2Data = player2Doc.data()!
+
+    const gameId = shortid.generate()
+    const hits = {
+      [player1]: [],
+      [player2]: [],
+    }
+    return transaction
+      .create(firestore.collection('games').doc(gameId), {
+        players: [player1, player2],
+        state: 'PLACEMENT',
+        currentPlayer: player1,
+        hits,
+        tries: hits,
+      })
+      .create(firestore.collection('placements').doc(gameId), {})
+      .create(firestore.collection('users').doc(player1).collection('games').doc(gameId), {
+        opponent: player2,
+        opponentName: player2Data.displayName,
+      })
+      .create(firestore.collection('users').doc(player2).collection('games').doc(gameId), {
+        opponent: player1,
+        opponentName: player1Data.displayName,
+      })
+      .delete(firestore.collection('users').doc(uid).collection('challenges').doc(friendId))
+  })
+  return {
+    result: 'Challenge accepted!',
+  }
+})

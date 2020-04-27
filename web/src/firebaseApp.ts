@@ -10,7 +10,7 @@ import 'firebase/firestore'
 import 'firebase/functions'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyDmYvS_7hMMlS_sSUJyL3wptbqUPWydvLI',
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
   authDomain: 'battleship-ish.firebaseapp.com',
   databaseURL: 'https://battleship-ish.firebaseio.com',
   projectId: 'battleship-ish',

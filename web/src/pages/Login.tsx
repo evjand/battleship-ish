@@ -49,6 +49,7 @@ const Login = () => {
             <FormLabel htmlFor="password">Password</FormLabel>
             <Input
               name="password"
+              type="password"
               placeholder="Password"
               value={password}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) => setPassword(event.target.value)}

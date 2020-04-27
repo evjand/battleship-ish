@@ -3,11 +3,12 @@ import ReactDOM from 'react-dom'
 import App from './App'
 import { ThemeProvider, CSSReset, ColorModeProvider } from '@chakra-ui/core'
 import { BrowserRouter as Router } from 'react-router-dom'
+import theme from './theme'
 
 ReactDOM.render(
   <React.StrictMode>
-    <ThemeProvider>
-      <ColorModeProvider value="dark">
+    <ThemeProvider theme={theme}>
+      <ColorModeProvider value="light">
         <CSSReset />
         <Router>
           <App />

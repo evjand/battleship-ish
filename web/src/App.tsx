@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Route, Switch, useHistory } from 'react-router-dom'
 import Header from './components/Header'
 import UserContext from './context/userContext'
-import { auth } from './firebaseApp'
+import { auth, firestore } from './firebaseApp'
 import FirebaseMatchmakingManager from './FirebaseMatchmakingManager'
 import Game from './pages/Game'
 import Home from './pages/Home'
@@ -83,6 +83,25 @@ const App = () => {
     }
   }, [])
 
+  const [userData, setUserData] = useState<any>({})
+
+  useEffect(() => {
+    if (!user) return
+
+    const unsubUserdata = firestore
+      .collection('users')
+      .doc(user?.uid)
+      .onSnapshot((snapshot) => {
+        if (snapshot.exists) {
+          setUserData(snapshot.data())
+        }
+      })
+
+    return () => {
+      unsubUserdata()
+    }
+  }, [user])
+
   if (initialLoad)
     return (
       <Box as="main" h="100vh" overflow="auto" bg="gray.900" color="white">
@@ -102,21 +121,29 @@ const App = () => {
   }
 
   return (
-    <UserContext.Provider value={{ user }}>
-      <Box as="main" h="100vh" overflow="auto" bg="gray.900" color="white">
-        <Header
-          onStartMatchmaking={startMatchmaking}
-          onStopMatchmaking={stopMatchmaking}
-          isMatchmaking={isMatchmaking}
-          time={time}
-        ></Header>
+    <UserContext.Provider
+      value={{ user, displayName: userData.displayName || '', friendCode: userData.friendCode || '' }}
+    >
+      <Box
+        as="main"
+        h="100vh"
+        overflow="auto"
+        background="linear-gradient(152deg, #6B46C1 0%, #553C9A 100%)"
+        color="white"
+      >
+        <Header></Header>
 
         <Switch>
           <Route path="/game/:gameId">
             <Game />
           </Route>
           <Route path="/">
-            <Home />
+            <Home
+              onStartMatchmaking={startMatchmaking}
+              onStopMatchmaking={stopMatchmaking}
+              isMatchmaking={isMatchmaking}
+              time={time}
+            />
           </Route>
         </Switch>
       </Box>
