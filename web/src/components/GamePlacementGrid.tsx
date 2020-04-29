@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect, FC } from 'react'
 import { Box, Grid, Button, Flex } from '@chakra-ui/core'
 import { useDrag, useGesture } from 'react-use-gesture'
 
@@ -20,7 +20,9 @@ const shipLength: { [key: string]: number } = {
   patrol: 2,
 }
 
-const GamePlacementGrid = () => {
+const GamePlacementGrid: FC<{
+  onShipsPlaced: (positions: { [key: string]: [string] }, isOverlapping: boolean) => void
+}> = ({ onShipsPlaced }) => {
   const gridRef = useRef()
   const lastShipDragged = useRef<string>('')
   const [shipPlacement, setShipPlacement] = useState<any>(defaultShipPosition)
@@ -70,18 +72,40 @@ const GamePlacementGrid = () => {
       Math.max(0, currentShipPlacement.y + Math.floor(y / gridWidth))
     )
     const newPosition = { ...currentShipPlacement, x: newX, y: newY }
-    setShipPlacement({ ...shipPlacement, [lastShipDragged.current]: newPosition })
+    const newPlacement = { ...shipPlacement, [lastShipDragged.current]: newPosition }
+    setShipPlacement(newPlacement)
     setShipDragPosition(undefined)
+
+    const placementObject = Object.entries<{ x: number; y: number; rotated: boolean }>(newPlacement).reduce(
+      (acc, [key, value]) => {
+        return {
+          ...acc,
+          [key]: {
+            positions: [...Array(shipLength[key])].map((_, index) =>
+              value.rotated ? `x${value.x}y${value.y + index}` : `x${value.x + index}y${value.y}`
+            ),
+          },
+        }
+      },
+      {}
+    )
+
+    const flatArray = Object.values<{ positions: [string] }>(placementObject)
+      .map((p) => p.positions)
+      .flat()
+    const isOverlapping = new Set(flatArray).size !== flatArray.length
+    onShipsPlaced(placementObject, isOverlapping)
   }
 
   useEffect(() => {
-    const squares = Object.entries<{ x: number; y: number; rotated: boolean }>(shipPlacement).map(([key, value]) => {
+    const positions = Object.entries<{ x: number; y: number; rotated: boolean }>(shipPlacement).map(([key, value]) => {
       return [...Array(shipLength[key])].map((_, index) =>
         value.rotated ? `x${value.x}y${value.y + index}` : `x${value.x + index}y${value.y}`
       )
     })
-    const flatArray = squares.flat()
-    setIsOverlapping(new Set(flatArray).size !== flatArray.length)
+    const flatArray = positions.flat()
+    const isOverlapping = new Set(flatArray).size !== flatArray.length
+    setIsOverlapping(isOverlapping)
   }, [shipPlacement])
 
   useEffect(() => {
@@ -120,16 +144,16 @@ const GamePlacementGrid = () => {
 
   const widthForShip = (ship: string) => {
     if (shipPlacement[ship].rotated) {
-      return `${gridWidth}px`
+      return `${gridWidth - 16}px`
     }
-    return `${shipLength[ship] * gridWidth}px`
+    return `${shipLength[ship] * gridWidth - 16}px`
   }
 
   const heightForShip = (ship: string) => {
     if (shipPlacement[ship].rotated) {
-      return `${shipLength[ship] * gridWidth}px`
+      return `${shipLength[ship] * gridWidth - 16}px`
     }
-    return `${gridWidth}px`
+    return `${gridWidth - 16}px`
   }
 
   return (
@@ -166,7 +190,14 @@ const GamePlacementGrid = () => {
                 top: calculateYPosition(ship),
                 left: calculateXPosition(ship),
               }}
-              background={ship === lastShipDragged.current ? 'brown' : 'orange'}
+              borderRadius="full"
+              transform="translate3d(8px, 8px, 0px)"
+              bg="gray.400"
+              border="4px solid"
+              borderColor={lastShipDragged.current === ship ? 'gray.300' : 'transparent'}
+              boxShadow={lastShipDragged.current === ship ? 'lg' : 'none'}
+              zIndex={lastShipDragged.current === ship ? 2 : 1}
+              opacity={0.95}
               pos="absolute"
               data-ship={ship}
               {...bind()}

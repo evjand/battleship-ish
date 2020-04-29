@@ -45,14 +45,25 @@ exports.trySquare = functions.region('europe-west1').https.onCall((data, context
 
       // Check if opponents placement data exists
       if (!placementData[opponent]) throw new functions.https.HttpsError('not-found', 'Placement data does not exist')
-      isHit = placementData[opponent].includes(square)
+      isHit = placementData[opponent]
+        .reduce((acc: [string], p: { positions: [string] }) => [...acc, ...p.positions], [])
+        .includes(square)
 
       const tries = { ...gameData.tries, [uid]: [...formerTries, square] }
 
       const formerHits = gameData.hits[uid]
       gameIsWon = formerHits.length === 9 && isHit
 
-      const hits = isHit ? { ...gameData.hits, [uid]: [...formerHits, square] } : gameData.hits
+      const placementDataArray: [{ positions: string[] }] = placementData[opponent]
+
+      const opponentHits = placementDataArray.map((p) => {
+        const hitsInShip = p.positions.filter((s) => tries[uid].includes(s))
+        return {
+          hits: hitsInShip,
+          sunk: p.positions.length === hitsInShip.length,
+        }
+      })
+      const hits = { ...gameData.hits, [uid]: opponentHits }
 
       const fieldsToUpdate = {
         tries,
@@ -208,7 +219,14 @@ exports.placementAdded = functions
           Object.keys(placementData).includes(docData.players[0]) &&
           Object.keys(placementData).includes(docData.players[1])
         ) {
-          return transaction.update(firestore.collection('games').doc(change.after.id), { state: 'PLAYING' })
+          return transaction
+            .update(firestore.collection('games').doc(change.after.id), { state: 'PLAYING' })
+            .update(firestore.collection('users').doc(docData.players[0]).collection('games').doc(change.after.id), {
+              placement: placementData[docData.players[0]],
+            })
+            .update(firestore.collection('users').doc(docData.players[1]).collection('games').doc(change.after.id), {
+              placement: placementData[docData.players[1]],
+            })
         } else {
           return transaction
         }

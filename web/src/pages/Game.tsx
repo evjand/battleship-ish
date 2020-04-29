@@ -14,7 +14,8 @@ const Game = () => {
   const toast = useToast()
   const { gameId } = useParams()
   const [game, setGame] = useState<firebase.firestore.DocumentData>({})
-  const [placement, setPlacement] = useState<string[]>([])
+  const [placement, setPlacement] = useState<{ [key: string]: [string] }>({})
+  const [canSendPlacement, setCanSendPlacement] = useState<boolean>(false)
   const [isTrying, setIsTrying] = useState<boolean>(false)
   const [showOwnBoard, setShowOwnBoard] = useState<boolean>(false)
 
@@ -32,16 +33,6 @@ const Game = () => {
       unsubGames()
     }
   }, [user, gameId])
-
-  const addToPlacement = (square: string) => {
-    setPlacement((places) =>
-      places.includes(square)
-        ? places.filter((p) => p !== square)
-        : placement.length < 10
-        ? [...places, square]
-        : places
-    )
-  }
 
   const trySquare = async (square: string) => {
     //functions.useFunctionsEmulator('http://localhost:5001')
@@ -86,13 +77,13 @@ const Game = () => {
   }
 
   const confirmPlacement = async () => {
-    if (placement.length !== 10) return
+    if (Object.keys(placement).length !== 5) return
     try {
       await firestore
         .collection('placements')
         .doc(gameId)
         .update({
-          [user!.uid]: placement,
+          [user!.uid]: Object.values(placement),
         })
       const hasPlaced = [...(game.hasPlaced || []), user?.uid]
       firestore.collection('games').doc(gameId).update({
@@ -107,7 +98,10 @@ const Game = () => {
 
   const opponent = game.players.find((player: string) => player !== user!.uid)
 
-  console.log(game)
+  const handleShipsPlaced = (positions: { [key: string]: [string] }, isOverlapping: boolean) => {
+    setPlacement(positions)
+    setCanSendPlacement(!isOverlapping)
+  }
 
   return (
     <Flex direction="column" justify="space-between">
@@ -172,8 +166,8 @@ const Game = () => {
                 border="2px solid"
                 borderColor="blue.500"
               >
-                {xy.map((yArray, xIndex) => {
-                  return yArray.map((checked, yIndex) => (
+                {xy.map((yArray, yIndex) => {
+                  return yArray.map((checked, xIndex) => (
                     <Button
                       onClick={() => trySquare(`x${xIndex}y${yIndex}`)}
                       key={`${xIndex}-${yIndex}`}
@@ -250,17 +244,17 @@ const Game = () => {
           <Heading>Waiting for opponent to place their ships</Heading>
         ) : (
           <>
-            <Heading py={4}>Select 10 squares to place ships on</Heading>
-            <GamePlacementGrid />
+            <Heading py={4}>Drag your ship placements</Heading>
+            <GamePlacementGrid onShipsPlaced={handleShipsPlaced} />
             <Box p={8}>
               <RaisedButton
                 w="100%"
                 justifyContent="center"
-                isDisabled={placement.length !== 10}
+                isDisabled={!canSendPlacement}
                 onClick={() => confirmPlacement()}
               >
                 <Text fontSize="1.25rem" fontWeight="700" color="white" textShadow="1px 1px 0px rgba(0,0,0,0.2)">
-                  {placement.length !== 10 ? `${10 - placement.length} squares left` : 'Submit placement'}
+                  {!canSendPlacement ? `Position ships so they are not overlapping` : 'Submit placement'}
                 </Text>
               </RaisedButton>
             </Box>
