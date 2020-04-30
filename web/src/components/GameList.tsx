@@ -51,15 +51,15 @@ const GameList = () => {
     <List mt={4}>
       {notStarted.length > 0 && <Heading>Not started</Heading>}
       {notStarted.map((game) => {
-        return <GameItem game={game} />
+        return <GameItem key={game.id} game={game} />
       })}
       {playing.length > 0 && <Heading>Playing</Heading>}
       {playing.map((game) => {
-        return <GameItem game={game} />
+        return <GameItem key={game.id} game={game} />
       })}
       {done.length > 0 && <Heading>Finished</Heading>}
       {done.map((game) => {
-        return <GameItem game={game} />
+        return <GameItem key={game.id} game={game} />
       })}
     </List>
   )

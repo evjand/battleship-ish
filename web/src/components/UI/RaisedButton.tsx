@@ -1,5 +1,5 @@
+import { ButtonProps, Flex, PseudoBox, PseudoBoxProps, Spinner } from '@chakra-ui/core'
 import React from 'react'
-import { PseudoBox, PseudoBoxProps, ButtonProps, Spinner, Box, Flex } from '@chakra-ui/core'
 
 interface RaisedButtonProps {
   variantColor?: string

@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react'
-import { Input, Text, Box, Button } from '@chakra-ui/core'
-import { firestore, functions } from '../firebaseApp'
 import {
+  Input,
   Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
   ModalBody,
   ModalCloseButton,
+  ModalContent,
+  ModalFooter,
+  ModalHeader,
+  ModalOverlay,
+  Text,
 } from '@chakra-ui/core'
+import React, { useEffect, useState } from 'react'
+import { firestore, functions } from '../firebaseApp'
 import RaisedButton from './UI/RaisedButton'
 
 interface PublicUser {

@@ -1,7 +1,7 @@
-import React, { useRef, useState, useContext, useEffect } from 'react'
+import { Box, List, ListItem, Text } from '@chakra-ui/core'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import UserContext from '../context/userContext'
 import { firestore, functions } from '../firebaseApp'
-import { List, ListItem, Text, Button, Image, Box, PseudoBox } from '@chakra-ui/core'
 import RaisedButton from './UI/RaisedButton'
 
 const FriendList = () => {

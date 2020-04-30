@@ -1,12 +1,12 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
-import { firestore, functions } from '../firebaseApp'
-import UserContext from '../context/userContext'
+import { Box, Button, Flex, Grid, Heading, Text, useToast } from '@chakra-ui/core'
+import React, { useContext, useEffect, useRef, useState } from 'react'
 import { useParams } from 'react-router'
-import { Button, Grid, Box, Flex, Heading, Text, useToast, PseudoBox } from '@chakra-ui/core'
-import RaisedButton from '../components/UI/RaisedButton'
+import GameBoardSquare from '../components/GameBoardSquare'
 import GamePlacementGrid from '../components/GamePlacementGrid'
 import Score from '../components/Score'
-import GameBoardSquare from '../components/GameBoardSquare'
+import RaisedButton from '../components/UI/RaisedButton'
+import UserContext from '../context/userContext'
+import { firestore, functions } from '../firebaseApp'
 
 const xy = Array.from(Array(10)).map(() => Array.from(Array(10)).map(() => false))
 

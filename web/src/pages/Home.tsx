@@ -1,13 +1,10 @@
 import { Box, Grid, Heading, Text } from '@chakra-ui/core'
-import React, { useContext, useEffect, useState, FC } from 'react'
+import React, { FC, useContext } from 'react'
 import AddFriends from '../components/AddFriends'
 import FriendList from '../components/FriendList'
-import FriendRequests from '../components/FriendRequests'
-import GameChallenges from '../components/GameChallenges'
 import GameList from '../components/GameList'
-import UserContext from '../context/userContext'
-import { firestore } from '../firebaseApp'
 import RaisedButton from '../components/UI/RaisedButton'
+import UserContext from '../context/userContext'
 
 export interface MatchmakingProps {
   onStartMatchmaking: () => void

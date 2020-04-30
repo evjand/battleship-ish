@@ -5,6 +5,7 @@ import UserContext from '../context/userContext'
 import { auth } from '../firebaseApp'
 import FriendRequests from './FriendRequests'
 import GameChallenges from './GameChallenges'
+import Presence from './Presence'
 
 const Header: FC = () => {
   const { user } = useContext(UserContext)
@@ -25,6 +26,7 @@ const Header: FC = () => {
       h="5rem"
     >
       <Link to="/">FireShips</Link>
+      <Presence />
       <Flex>
         <FriendRequests />
         <GameChallenges />

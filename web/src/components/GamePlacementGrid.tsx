@@ -1,6 +1,6 @@
-import React, { useState, useRef, useEffect, FC } from 'react'
-import { Box, Grid, Button, Flex } from '@chakra-ui/core'
-import { useDrag, useGesture } from 'react-use-gesture'
+import { Box, Button, Flex, Grid } from '@chakra-ui/core'
+import React, { FC, useEffect, useRef, useState } from 'react'
+import { useGesture } from 'react-use-gesture'
 
 const xy = Array.from(Array(10)).map(() => Array.from(Array(10)).map(() => false))
 
@@ -120,6 +120,7 @@ const GamePlacementGrid: FC<{
     const isOverlapping = new Set(flatArray).size !== flatArray.length
     setIsOverlapping(isOverlapping)
     onShipsPlaced(placementObject, isOverlapping)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shipPlacement])
 
   useEffect(() => {

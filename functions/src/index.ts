@@ -46,7 +46,7 @@ exports.trySquare = functions.region('europe-west1').https.onCall((data, context
       // Check if opponents placement data exists
       if (!placementData[opponent]) throw new functions.https.HttpsError('not-found', 'Placement data does not exist')
       isHit = placementData[opponent]
-        .reduce((acc: [string], p: { positions: [string] }) => [...acc, ...p.positions], [])
+        .reduce((acc: string[], p: { positions: string[] }) => [...acc, ...p.positions], [])
         .includes(square)
 
       const tries = { ...gameData.tries, [uid]: [...formerTries, square] }
