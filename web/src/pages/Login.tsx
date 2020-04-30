@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Box, Flex, FormControl, FormLabel, Input, FormErrorMessage, Button } from '@chakra-ui/core'
 import { auth } from '../firebaseApp'
+import RaisedButton from '../components/UI/RaisedButton'
 
 interface EmailSigninError {
   code: string
@@ -35,9 +36,12 @@ const Login = () => {
   }
 
   return (
-    <Flex align="center" justify="center" w="100%" minH="100vh">
+    <Flex align="center" justify="center" w="100%" minH="100vh" bg="purple.600">
       <Flex direction="column">
-        <Box as="form" mb={4} onSubmit={handleSubmit}>
+        <RaisedButton onClick={signInAnonymously} variantColor="orange.400" p={8} fontSize="2rem" color="white">
+          Click to play
+        </RaisedButton>
+        <Box as="form" mt={12} onSubmit={handleSubmit}>
           <FormControl isInvalid={!!formError}>
             <FormLabel htmlFor="email">Email</FormLabel>
             <Input
@@ -60,9 +64,6 @@ const Login = () => {
             Sign in with email/password
           </Button>
         </Box>
-        <Button onClick={signInAnonymously} variantColor="teal" variant="ghost">
-          Continue without signing in
-        </Button>
       </Flex>
     </Flex>
   )

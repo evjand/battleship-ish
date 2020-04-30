@@ -9,6 +9,7 @@ import FirebaseMatchmakingManager from './FirebaseMatchmakingManager'
 import Game from './pages/Game'
 import Home from './pages/Home'
 import Login from './pages/Login'
+import Footer from './components/Footer'
 
 const matchmakingManager = new FirebaseMatchmakingManager()
 
@@ -146,6 +147,7 @@ const App = () => {
             />
           </Route>
         </Switch>
+        <Footer></Footer>
       </Box>
     </UserContext.Provider>
   )

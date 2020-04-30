@@ -107,7 +107,7 @@ const GameChallenges = () => {
           )}
         </Box>
       </PopoverTrigger>
-      <PopoverContent zIndex={4} maxW="400px" bg="purple.600" borderColor="purple.700">
+      <PopoverContent zIndex={4} w="400px" maxW="calc(100% - 32px)" bg="purple.600" borderColor="purple.700">
         <PopoverArrow />
         <PopoverHeader borderColor="purple.700">Game challenges</PopoverHeader>
         <PopoverBody>

@@ -103,9 +103,23 @@ const GamePlacementGrid: FC<{
         value.rotated ? `x${value.x}y${value.y + index}` : `x${value.x + index}y${value.y}`
       )
     })
+    const placementObject = Object.entries<{ x: number; y: number; rotated: boolean }>(shipPlacement).reduce(
+      (acc, [key, value]) => {
+        return {
+          ...acc,
+          [key]: {
+            positions: [...Array(shipLength[key])].map((_, index) =>
+              value.rotated ? `x${value.x}y${value.y + index}` : `x${value.x + index}y${value.y}`
+            ),
+          },
+        }
+      },
+      {}
+    )
     const flatArray = positions.flat()
     const isOverlapping = new Set(flatArray).size !== flatArray.length
     setIsOverlapping(isOverlapping)
+    onShipsPlaced(placementObject, isOverlapping)
   }, [shipPlacement])
 
   useEffect(() => {
@@ -184,6 +198,7 @@ const GamePlacementGrid: FC<{
         {Object.keys(shipPlacement).map((ship) => {
           return (
             <Box
+              key={ship}
               style={{
                 width: widthForShip(ship),
                 height: heightForShip(ship),
@@ -205,9 +220,13 @@ const GamePlacementGrid: FC<{
           )
         })}
       </Grid>
-      <Flex w="200px" flexDir="column">
-        <Button variantColor="blue" onClick={() => rotateShip(lastShipDragged.current)}>
-          Rotate
+      <Flex pt={4} w="200px" margin="0 auto" flexDir="column">
+        <Button
+          variantColor="blue"
+          isDisabled={!lastShipDragged.current}
+          onClick={() => rotateShip(lastShipDragged.current)}
+        >
+          Rotate selected ship
         </Button>
         {isOverlapping ? 'Ships are overlapping' : 'Ships are well placed'}
       </Flex>

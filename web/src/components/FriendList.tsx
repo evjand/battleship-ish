@@ -70,7 +70,7 @@ const FriendList = () => {
             borderBottom="2px solid"
             borderColor="purple.700"
           >
-            <Text fontSize="1.5rem">{friend.displayName}</Text>
+            <Text fontSize="1.25rem">{friend.displayName}</Text>
             <RaisedButton
               isLoading={challengesLoading.includes(friend.userId)}
               isDisabled={challengesLoading.includes(friend.userId)}

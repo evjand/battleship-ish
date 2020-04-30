@@ -20,7 +20,7 @@ const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isM
   const { displayName, friendCode } = useContext(UserContext)
 
   return (
-    <Grid templateColumns={{ base: '1fr', md: '1fr 1fr' }} p={4} gridGap={6}>
+    <Grid maxW="1200px" margin="0 auto" templateColumns={{ base: '1fr', md: '2fr 1fr' }} p={4} gridGap={6}>
       <Box bg="purple.800" p={4} rounded="lg" boxShadow="0px 0px 0px 8px #6B46C1">
         {!isMatchmaking ? (
           <RaisedButton w="100%" justifyContent="center" variantColor="teal.400" onClick={onStartMatchmaking}>
@@ -38,9 +38,8 @@ const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isM
         <GameList />
       </Box>
       <Box bg="purple.800" p={4} rounded="lg" boxShadow="0px 0px 0px 8px #6B46C1">
-        <Heading>
-          {displayName} ({friendCode})
-        </Heading>
+        <Heading>{displayName}</Heading>
+        <Heading size="md">Friend code: {friendCode}</Heading>
         <Heading mt={8} mb={2} size="md" fontWeight="900" textShadow="1px 1px 0px rgba(0,0,0,0.4)" letterSpacing="1px">
           Friends
         </Heading>

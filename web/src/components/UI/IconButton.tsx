@@ -27,6 +27,7 @@ const IconButton: React.FC<PseudoBoxProps & ButtonProps & IconButton> = ({
       borderBottomWidth={4}
       transition="all 0.2s ease"
       outline="none"
+      position="relative"
       _hover={{
         backgroundColor: `${color}.${Math.min(colorGrade + 100, 900)}`,
         borderBottomColor: `${color}.${Math.min(colorGrade + 200, 900)}`,

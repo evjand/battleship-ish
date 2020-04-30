@@ -1,23 +1,29 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useEffect, useState, useRef } from 'react'
 import { firestore, functions } from '../firebaseApp'
 import UserContext from '../context/userContext'
 import { useParams } from 'react-router'
-import { Button, Grid, Box, Flex, Heading, Text, useToast } from '@chakra-ui/core'
+import { Button, Grid, Box, Flex, Heading, Text, useToast, PseudoBox } from '@chakra-ui/core'
 import RaisedButton from '../components/UI/RaisedButton'
-import { useDrag } from 'react-use-gesture'
 import GamePlacementGrid from '../components/GamePlacementGrid'
+import Score from '../components/Score'
+import GameBoardSquare from '../components/GameBoardSquare'
 
 const xy = Array.from(Array(10)).map(() => Array.from(Array(10)).map(() => false))
 
+const shipLength = [5, 4, 3, 3, 2]
+
 const Game = () => {
   const { user, displayName } = useContext(UserContext)
+  const gridRef = useRef()
   const toast = useToast()
   const { gameId } = useParams()
-  const [game, setGame] = useState<firebase.firestore.DocumentData>({})
+  const [game, setGame] = useState<Game>()
   const [placement, setPlacement] = useState<{ [key: string]: [string] }>({})
   const [canSendPlacement, setCanSendPlacement] = useState<boolean>(false)
   const [isTrying, setIsTrying] = useState<boolean>(false)
   const [showOwnBoard, setShowOwnBoard] = useState<boolean>(false)
+  const [personalPlacmenet, setPersonalPlacement] = useState<{ positions: string[] }[]>([])
+  const [gridWidth, setGridWidth] = useState<number>(0)
 
   useEffect(() => {
     if (!user) return
@@ -26,7 +32,21 @@ const Game = () => {
       .collection('games')
       .doc(gameId)
       .onSnapshot((snapshot) => {
-        setGame(snapshot.data()!)
+        const game: Game = { id: snapshot.id, ...snapshot.data()! } as Game
+        setGame(game)
+      })
+
+    firestore
+      .collection('users')
+      .doc(user.uid)
+      .collection('games')
+      .doc(gameId)
+      .get()
+      .then((snapshot) => {
+        setPersonalPlacement(snapshot.data()!.placement)
+      })
+      .catch((err) => {
+        console.log(err)
       })
 
     return () => {
@@ -34,9 +54,45 @@ const Game = () => {
     }
   }, [user, gameId])
 
+  useEffect(() => {
+    if (!gridRef.current) {
+      return
+    }
+    const grid: HTMLElement = gridRef.current!
+    const rect = grid.getBoundingClientRect()
+    const width = (rect.width - 4) / 10
+    setGridWidth(width)
+  }, [showOwnBoard])
+
+  const widthForShip = (ship: { positions: string[] }, index: number) => {
+    const rotated = parseInt(ship.positions[0][1], 10) === parseInt(ship.positions[1][1], 10)
+    if (rotated) {
+      return `${gridWidth - 16}px`
+    }
+    return `${shipLength[index] * gridWidth - 16}px`
+  }
+
+  const heightForShip = (ship: { positions: string[] }, index: number) => {
+    const rotated = parseInt(ship.positions[0][1], 10) === parseInt(ship.positions[1][1], 10)
+    if (rotated) {
+      return `${shipLength[index] * gridWidth - 16}px`
+    }
+    return `${gridWidth - 16}px`
+  }
+
+  const calculateYPosition = (ship: { positions: string[] }) => {
+    const y = parseInt(ship.positions[0][3], 10)
+    return `${y * gridWidth}px`
+  }
+
+  const calculateXPosition = (ship: { positions: string[] }) => {
+    const x = parseInt(ship.positions[0][1], 10)
+    return `${x * gridWidth}px`
+  }
+
   const trySquare = async (square: string) => {
     //functions.useFunctionsEmulator('http://localhost:5001')
-    if (game.currentPlayer !== user?.uid || isTrying) {
+    if (game?.currentPlayer !== user?.uid || isTrying) {
       toast({
         title: 'Not your turn.',
         description: "Couldn't fire rocket, its not your turn.",
@@ -85,7 +141,7 @@ const Game = () => {
         .update({
           [user!.uid]: Object.values(placement),
         })
-      const hasPlaced = [...(game.hasPlaced || []), user?.uid]
+      const hasPlaced = [...(game?.hasPlaced || []), user?.uid]
       firestore.collection('games').doc(gameId).update({
         hasPlaced,
       })
@@ -94,9 +150,9 @@ const Game = () => {
     }
   }
 
-  if (!game.players) return <Text>Loading</Text>
+  if (!game?.players) return <Text>Loading</Text>
 
-  const opponent = game.players.find((player: string) => player !== user!.uid)
+  const opponent = game?.players.find((player: string) => player !== user!.uid)!
 
   const handleShipsPlaced = (positions: { [key: string]: [string] }, isOverlapping: boolean) => {
     setPlacement(positions)
@@ -110,50 +166,23 @@ const Game = () => {
         {game.state === 'PLAYING' ? (
           <>
             <Heading textAlign="center">{game.currentPlayer === user?.uid ? 'Your' : 'Opponents'} turn</Heading>
-            <Flex justifyContent="space-between" w="100%" maxW="550px" margin="0 auto" mb={2}>
+            <Flex flexWrap="wrap" justifyContent="space-between" w="100%" maxW="550px" margin="0 auto" mb={2}>
               <Box>
                 <Text fontSize="0.75rem">{displayName}</Text>
                 {game.hits && (
-                  <Box
-                    borderRadius="md"
-                    d="flex"
-                    w="128px"
-                    h="32px"
-                    bg="purple.500"
-                    justifyContent="space-around"
-                    p={1}
-                    transform="skewX(12deg)"
-                  >
-                    {game.hits[user!.uid].map(() => (
-                      <Box borderRadius="sm" w="8px" bg="green.400"></Box>
-                    ))}
-                    {[...Array.from(Array(10 - game.hits[user!.uid].length))].map(() => (
-                      <Box borderRadius="sm" w="8px" bg="purple.400"></Box>
-                    ))}
-                  </Box>
+                  <Score
+                    isOpponent={false}
+                    hits={game.hits[user!.uid].flatMap((ship: { hits: string[]; sunk: boolean }) => ship.hits)}
+                  />
                 )}
               </Box>
-              <Box textAlign="right">
-                <Text fontSize="0.75rem">{game.opponentName || game.opponent || 'Opponent'}</Text>
+              <Box ml="auto" textAlign="right">
+                <Text fontSize="0.75rem">{opponent || 'Opponent'}</Text>
                 {game.hits && (
-                  <Box
-                    d="flex"
-                    w="128px"
-                    h="32px"
-                    borderRadius="md"
-                    bg="purple.500"
-                    justifyContent="space-around"
-                    p={1}
-                    mb={2}
-                    transform="skewX(-12deg)"
-                  >
-                    {game.hits[opponent].map(() => (
-                      <Box borderRadius="sm" w="8px" bg="red.400"></Box>
-                    ))}
-                    {[...Array.from(Array(10 - game.hits[opponent].length))].map(() => (
-                      <Box borderRadius="sm" w="8px" bg="purple.400"></Box>
-                    ))}
-                  </Box>
+                  <Score
+                    isOpponent
+                    hits={game.hits[opponent].flatMap((ship: { hits: string[]; sunk: boolean }) => ship.hits)}
+                  />
                 )}
               </Box>
             </Flex>
@@ -165,39 +194,17 @@ const Game = () => {
                 margin="0 auto"
                 border="2px solid"
                 borderColor="blue.500"
+                boxShadow={game.currentPlayer === user?.uid ? '0px 0px 48px #FFEB3B' : 'none'}
               >
                 {xy.map((yArray, yIndex) => {
                   return yArray.map((checked, xIndex) => (
-                    <Button
-                      onClick={() => trySquare(`x${xIndex}y${yIndex}`)}
-                      key={`${xIndex}-${yIndex}`}
-                      isDisabled={game.tries[user!.uid].includes(`x${xIndex}y${yIndex}`)}
-                      border="2px solid"
-                      borderColor="blue.500"
-                      borderRadius="none"
-                      w="100%"
-                      p={0}
-                      paddingTop="100%"
-                      minW="auto"
-                      h="auto"
-                      _hover={{
-                        boxShadow: 'inset 0px 0px 0px 2px red',
-                      }}
-                      _disabled={{
-                        boxShadow: 'none',
-                      }}
-                      _active={{}}
-                      transition="none"
-                      bg={
-                        game.hits[user!.uid].includes(`x${xIndex}y${yIndex}`)
-                          ? 'green.300'
-                          : game.tries[user!.uid].includes(`x${xIndex}y${yIndex}`)
-                          ? 'red.500'
-                          : 'blue.700'
-                      }
-                    >
-                      <Text></Text>
-                    </Button>
+                    <GameBoardSquare
+                      xIndex={xIndex}
+                      yIndex={yIndex}
+                      game={game}
+                      trySquare={trySquare}
+                      isPersonalBoard={false}
+                    />
                   ))
                 })}
               </Grid>
@@ -208,26 +215,38 @@ const Game = () => {
                 maxW="550px"
                 margin="0 auto"
                 border="2px solid"
-                borderColor="blue.200"
+                borderColor="blue.500"
+                position="relative"
+                ref={gridRef}
               >
-                {xy.map((yArray, xIndex) => {
-                  return yArray.map((checked, yIndex) => (
-                    <Box
-                      key={`${xIndex}-${yIndex}`}
-                      //={() => toggleButtonAt(xIndex, yIndex)}
-                      border="2px solid"
-                      borderColor="blue.200"
-                      w="100%"
-                      paddingTop="100%"
-                      bg={
-                        game.hits[opponent].includes(`x${xIndex}y${yIndex}`)
-                          ? 'red.500'
-                          : game.tries[opponent].includes(`x${xIndex}y${yIndex}`)
-                          ? 'green.300'
-                          : 'blue.300'
-                      }
-                    ></Box>
+                {xy.map((yArray, yIndex) => {
+                  return yArray.map((checked, xIndex) => (
+                    <GameBoardSquare
+                      xIndex={xIndex}
+                      yIndex={yIndex}
+                      game={game}
+                      trySquare={trySquare}
+                      isPersonalBoard
+                    />
                   ))
+                })}
+                {personalPlacmenet.map((ship, index) => {
+                  return (
+                    <Box
+                      style={{
+                        width: widthForShip(ship, index),
+                        height: heightForShip(ship, index),
+                        top: calculateYPosition(ship),
+                        left: calculateXPosition(ship),
+                      }}
+                      borderRadius="full"
+                      transform="translate3d(8px, 8px, 0px)"
+                      bg="gray.400"
+                      border="4px solid"
+                      opacity={0.35}
+                      pos="absolute"
+                    ></Box>
+                  )
                 })}
               </Grid>
             )}
@@ -240,11 +259,15 @@ const Game = () => {
               </Button>
             </Flex>
           </>
-        ) : game.hasPlaced && game.hasPlaced.includes(user?.uid) ? (
-          <Heading>Waiting for opponent to place their ships</Heading>
+        ) : game.hasPlaced && game.hasPlaced.includes(user!.uid) ? (
+          <Heading p={4} textAlign="center">
+            Waiting for opponent to place their ships
+          </Heading>
         ) : (
           <>
-            <Heading py={4}>Drag your ship placements</Heading>
+            <Heading p={4} textAlign="center">
+              Drag your ship placements
+            </Heading>
             <GamePlacementGrid onShipsPlaced={handleShipsPlaced} />
             <Box p={8}>
               <RaisedButton

@@ -24,7 +24,7 @@ const Header: FC = () => {
       w="100%"
       h="5rem"
     >
-      <Link to="/">Bombergrid</Link>
+      <Link to="/">FireShips</Link>
       <Flex>
         <FriendRequests />
         <GameChallenges />

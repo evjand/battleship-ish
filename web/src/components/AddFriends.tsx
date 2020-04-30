@@ -10,6 +10,7 @@ import {
   ModalBody,
   ModalCloseButton,
 } from '@chakra-ui/core'
+import RaisedButton from './UI/RaisedButton'
 
 interface PublicUser {
   displayName: string
@@ -19,6 +20,7 @@ interface PublicUser {
 const AddFriends = () => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [foundUser, setFoundUser] = useState<PublicUser | undefined>()
+  const [loading, setLoading] = useState<boolean>(false)
 
   useEffect(() => {
     if (searchQuery.length < 3) return
@@ -57,6 +59,19 @@ const AddFriends = () => {
     setSearchQuery('')
   }
 
+  const handleAdd = async (userId: string) => {
+    try {
+      setLoading(true)
+      await sendFriendRequest(userId)
+      setLoading(false)
+      onClose()
+    } catch (error) {
+      setLoading(false)
+      onClose()
+      console.log(error)
+    }
+  }
+
   return (
     <>
       <Input
@@ -74,18 +89,33 @@ const AddFriends = () => {
       <Modal isOpen={!!foundUser} onClose={onClose}>
         <ModalOverlay />
         {foundUser && (
-          <ModalContent>
+          <ModalContent borderRadius="lg" bg="purple.200">
             <ModalHeader>{foundUser.displayName}</ModalHeader>
             <ModalCloseButton />
             <ModalBody></ModalBody>
 
             <ModalFooter>
-              <Button variantColor="blue" mr={3} onClick={onClose}>
-                Close
-              </Button>
-              <Button variantColor="green" onClick={() => sendFriendRequest(foundUser.userId)}>
-                Add friend
-              </Button>
+              <RaisedButton isDisabled={loading} variantColor="gray.400" mr={3} onClick={onClose}>
+                <Text whiteSpace="nowrap" fontSize="1.25rem" fontWeight="700" color="black">
+                  Close
+                </Text>
+              </RaisedButton>
+              <RaisedButton
+                isLoading={loading}
+                isDisabled={loading}
+                variantColor="green.400"
+                onClick={() => handleAdd(foundUser.userId)}
+              >
+                <Text
+                  whiteSpace="nowrap"
+                  fontSize="1.25rem"
+                  fontWeight="700"
+                  color="white"
+                  textShadow="1px 1px 0px rgba(0,0,0,0.2)"
+                >
+                  Add friend
+                </Text>
+              </RaisedButton>
             </ModalFooter>
           </ModalContent>
         )}
