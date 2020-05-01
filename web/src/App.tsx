@@ -138,6 +138,14 @@ const App = () => {
           <Route path="/game/:gameId">
             <Game />
           </Route>
+          <Route path="/add/:friendCode">
+            <Home
+              onStartMatchmaking={startMatchmaking}
+              onStopMatchmaking={stopMatchmaking}
+              isMatchmaking={isMatchmaking}
+              time={time}
+            />
+          </Route>
           <Route path="/">
             <Home
               onStartMatchmaking={startMatchmaking}

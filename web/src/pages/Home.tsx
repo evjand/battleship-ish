@@ -1,10 +1,11 @@
-import { Box, Grid, Heading, Text } from '@chakra-ui/core'
+import { Box, Grid, Heading, Text, Link } from '@chakra-ui/core'
 import React, { FC, useContext } from 'react'
 import AddFriends from '../components/AddFriends'
 import FriendList from '../components/FriendList'
 import GameList from '../components/GameList'
 import RaisedButton from '../components/UI/RaisedButton'
 import UserContext from '../context/userContext'
+import { useParams } from 'react-router'
 
 export interface MatchmakingProps {
   onStartMatchmaking: () => void
@@ -15,6 +16,7 @@ export interface MatchmakingProps {
 
 const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isMatchmaking, time }) => {
   const { displayName, friendCode } = useContext(UserContext)
+  const params = useParams<{ friendCode?: string }>()
 
   return (
     <Grid maxW="1200px" margin="0 auto" templateColumns={{ base: '1fr', md: '2fr 1fr' }} p={4} gridGap={6}>
@@ -36,7 +38,13 @@ const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isM
       </Box>
       <Box bg="purple.800" p={4} rounded="lg" boxShadow="0px 0px 0px 8px #6B46C1">
         <Heading>{displayName}</Heading>
-        <Heading size="md">Friend code: {friendCode}</Heading>
+        <Heading size="md">
+          Friend code: <span style={{ WebkitUserSelect: 'all' }}>{friendCode}</span>
+        </Heading>
+        <Box>
+          <Link href={`https://fireships.fun/add/${friendCode}`}>{`https://fireships.fun/add/${friendCode}`}</Link>
+          <Text>Send this link to friends so they can add you easier</Text>
+        </Box>
         <Heading mt={8} mb={2} size="md" fontWeight="900" textShadow="1px 1px 0px rgba(0,0,0,0.4)" letterSpacing="1px">
           Friends
         </Heading>
@@ -44,7 +52,7 @@ const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isM
         <Heading mt={8} mb={2} size="md" fontWeight="900" textShadow="1px 1px 0px rgba(0,0,0,0.4)" letterSpacing="1px">
           Add new friends
         </Heading>
-        <AddFriends />
+        <AddFriends friendCode={params.friendCode} />
       </Box>
     </Grid>
   )

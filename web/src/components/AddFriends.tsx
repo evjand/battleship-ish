@@ -9,19 +9,22 @@ import {
   ModalOverlay,
   Text,
 } from '@chakra-ui/core'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, FC } from 'react'
 import { firestore, functions } from '../firebaseApp'
 import RaisedButton from './UI/RaisedButton'
+import { useHistory } from 'react-router'
 
 interface PublicUser {
   displayName: string
   userId: string
 }
 
-const AddFriends = () => {
+const AddFriends: FC<{ friendCode?: string }> = ({ friendCode }) => {
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [foundUser, setFoundUser] = useState<PublicUser | undefined>()
   const [loading, setLoading] = useState<boolean>(false)
+
+  const history = useHistory()
 
   useEffect(() => {
     if (searchQuery.length < 3) return
@@ -58,6 +61,7 @@ const AddFriends = () => {
   const onClose = () => {
     setFoundUser(undefined)
     setSearchQuery('')
+    history.push(`/`)
   }
 
   const handleAdd = async (userId: string) => {
@@ -72,6 +76,12 @@ const AddFriends = () => {
       console.log(error)
     }
   }
+
+  useEffect(() => {
+    if (friendCode) {
+      setSearchQuery(friendCode)
+    }
+  }, [friendCode])
 
   return (
     <>

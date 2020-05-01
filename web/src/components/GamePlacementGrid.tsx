@@ -20,10 +20,6 @@ const shipLength: { [key: string]: number } = {
   patrol: 2,
 }
 
-const preventScrollHandler = (event: Event) => {
-  event.preventDefault()
-}
-
 const GamePlacementGrid: FC<{
   onShipsPlaced: (positions: { [key: string]: [string] }, isOverlapping: boolean) => void
 }> = ({ onShipsPlaced }) => {

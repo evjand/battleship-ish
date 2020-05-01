@@ -75,7 +75,7 @@ const FriendRequests = () => {
     return () => {
       unsubFriendsReq()
     }
-  }, [notificationFx, user])
+  }, [user])
 
   const acceptFriendRequest = async (userId: string) => {
     if (requestsLoading.includes(userId)) return
