@@ -1,4 +1,4 @@
-import { Box, Grid, Heading, Text, Link } from '@chakra-ui/core'
+import { Box, Grid, Heading, Text, Link, Input } from '@chakra-ui/core'
 import React, { FC, useContext } from 'react'
 import AddFriends from '../components/AddFriends'
 import FriendList from '../components/FriendList'
@@ -41,9 +41,9 @@ const Home: FC<MatchmakingProps> = ({ onStartMatchmaking, onStopMatchmaking, isM
         <Heading size="md">
           Friend code: <span style={{ WebkitUserSelect: 'all' }}>{friendCode}</span>
         </Heading>
-        <Box>
-          <Link href={`https://fireships.fun/add/${friendCode}`}>{`https://fireships.fun/add/${friendCode}`}</Link>
-          <Text>Send this link to friends so they can add you easier</Text>
+        <Box py={2}>
+          <Input bg="purple.500" border="none" value={`https://fireships.fun/add/${friendCode}`} />
+          <Text fontSize="0.75rem">Send this link to friends so they can add you easier</Text>
         </Box>
         <Heading mt={8} mb={2} size="md" fontWeight="900" textShadow="1px 1px 0px rgba(0,0,0,0.4)" letterSpacing="1px">
           Friends
