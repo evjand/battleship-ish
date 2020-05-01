@@ -16,6 +16,27 @@ import UserContext from '../context/userContext'
 import { firestore, functions } from '../firebaseApp'
 import IconButton from './UI/IconButton'
 import RaisedButton from './UI/RaisedButton'
+
+import UIFx from 'uifx'
+import notificationSound from '../sounds/notification1.wav'
+import acceptedSound from '../sounds/accepted.wav'
+import declineSound from '../sounds/decline.wav'
+
+const notificationFx = new UIFx(notificationSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
+
+const acceptedFx = new UIFx(acceptedSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
+
+const declineFx = new UIFx(declineSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
+
 const GameChallenges = () => {
   const { user } = useContext(UserContext)
   const challengesRef = useRef<any[]>([])
@@ -35,6 +56,7 @@ const GameChallenges = () => {
           if (change.type === 'added') {
             const data = { ...doc.data(), id: doc.id }
             challengesRef.current = [...challengesRef.current, data]
+            notificationFx.play()
           }
           if (change.type === 'modified') {
             const id = doc.id
@@ -61,6 +83,7 @@ const GameChallenges = () => {
     try {
       setRequestsLoading((ids) => [...ids, challengeId])
       await firestore.collection('users').doc(user?.uid).collection('challenges').doc(challengeId).delete()
+      declineFx.play()
       setRequestsLoading((ids) => ids.filter((id) => id !== challengeId))
     } catch (error) {
       setRequestsLoading((ids) => ids.filter((id) => id !== challengeId))
@@ -74,6 +97,7 @@ const GameChallenges = () => {
       setRequestsLoading((ids) => [...ids, userId])
       const func = functions.httpsCallable('acceptChallenge')
       await func({ userId })
+      acceptedFx.play()
       setRequestsLoading((ids) => ids.filter((id) => id !== userId))
     } catch (error) {
       setRequestsLoading((ids) => ids.filter((id) => id !== userId))

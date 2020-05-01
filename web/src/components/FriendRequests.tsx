@@ -16,6 +16,25 @@ import UserContext from '../context/userContext'
 import { firestore, functions } from '../firebaseApp'
 import IconButton from './UI/IconButton'
 import RaisedButton from './UI/RaisedButton'
+import UIFx from 'uifx'
+import notificationSound from '../sounds/notification1.wav'
+import acceptedSound from '../sounds/accepted.wav'
+import declineSound from '../sounds/decline.wav'
+
+const notificationFx = new UIFx(notificationSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
+
+const acceptedFx = new UIFx(acceptedSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
+
+const declineFx = new UIFx(declineSound, {
+  volume: 0.5,
+  throttleMs: 100,
+})
 
 const FriendRequests = () => {
   const { user } = useContext(UserContext)
@@ -36,6 +55,7 @@ const FriendRequests = () => {
           if (change.type === 'added') {
             const data = { ...doc.data(), id: doc.id }
             friendsReqRef.current = [...friendsReqRef.current, data]
+            notificationFx.play()
           }
           if (change.type === 'modified') {
             const id = doc.id
@@ -55,7 +75,7 @@ const FriendRequests = () => {
     return () => {
       unsubFriendsReq()
     }
-  }, [user])
+  }, [notificationFx, user])
 
   const acceptFriendRequest = async (userId: string) => {
     if (requestsLoading.includes(userId)) return
@@ -63,6 +83,7 @@ const FriendRequests = () => {
       setRequestsLoading((ids) => [...ids, userId])
       const func = functions.httpsCallable('acceptFriendRequest')
       await func({ userId })
+      acceptedFx.play()
       setRequestsLoading((ids) => ids.filter((id) => id !== userId))
     } catch (error) {
       setRequestsLoading((ids) => ids.filter((id) => id !== userId))
@@ -75,6 +96,7 @@ const FriendRequests = () => {
     try {
       setRequestsLoading((ids) => [...ids, requestId])
       await firestore.collection('users').doc(user?.uid).collection('friend-requests').doc(requestId).delete()
+      declineFx.play()
       setRequestsLoading((ids) => ids.filter((id) => id !== requestId))
     } catch (error) {
       setRequestsLoading((ids) => ids.filter((id) => id !== requestId))

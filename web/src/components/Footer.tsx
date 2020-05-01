@@ -8,7 +8,7 @@ const Footer: FC = () => {
         <Heading size="md">BETA</Heading>
         <Text maxW="400px">
           This game is currently in a public beta, and that means stuff might be a little unstable and any game or user
-          date may be reset at any time.
+          data may be reset at any time.
         </Text>
       </Flex>
       <Flex flexDir="column" p={4}>

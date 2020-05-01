@@ -20,6 +20,10 @@ const shipLength: { [key: string]: number } = {
   patrol: 2,
 }
 
+const preventScrollHandler = (event: Event) => {
+  event.preventDefault()
+}
+
 const GamePlacementGrid: FC<{
   onShipsPlaced: (positions: { [key: string]: [string] }, isOverlapping: boolean) => void
 }> = ({ onShipsPlaced }) => {
@@ -205,6 +209,7 @@ const GamePlacementGrid: FC<{
                 height: heightForShip(ship),
                 top: calculateYPosition(ship),
                 left: calculateXPosition(ship),
+                touchAction: 'none',
               }}
               borderRadius="full"
               transform="translate3d(8px, 8px, 0px)"
