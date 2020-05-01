@@ -190,8 +190,25 @@ const Game = () => {
   return (
     <Flex direction="column" justify="space-between">
       <Flex direction="column" p={2}>
-        {game.winner && <Heading>Winner {game.winner === user?.uid ? 'You won' : 'Your opponent won'}</Heading>}
-        {game.state === 'PLAYING' ? (
+        {game.winner ? (
+          <Heading textAlign="center">
+            {game.winner === user?.uid ? (
+              <span>
+                <span role="img" aria-label="Confetti">
+                  🎉
+                </span>
+                You won
+              </span>
+            ) : (
+              <span>
+                <span role="img" aria-label="Sad face">
+                  😔
+                </span>
+                Your opponent won
+              </span>
+            )}
+          </Heading>
+        ) : game.state === 'PLAYING' ? (
           <>
             <Heading textAlign="center">{game.currentPlayer === user?.uid ? 'Your' : 'Opponents'} turn</Heading>
             <Flex flexWrap="wrap" justifyContent="space-between" w="100%" maxW="550px" margin="0 auto" mb={2}>

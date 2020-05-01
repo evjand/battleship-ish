@@ -51,8 +51,8 @@ exports.trySquare = functions.region('europe-west1').https.onCall((data, context
 
       const tries = { ...gameData.tries, [uid]: [...formerTries, square] }
 
-      const formerHits = gameData.hits[uid]
-      gameIsWon = formerHits.length === 9 && isHit
+      const formerHits = gameData.hits[uid].reduce((acc: string[], h: { hits: string[] }) => [...acc, ...h.hits], [])
+      gameIsWon = formerHits.length === 16 && isHit
 
       const placementDataArray: [{ positions: string[] }] = placementData[opponent]
 

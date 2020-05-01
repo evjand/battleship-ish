@@ -28,7 +28,15 @@ const GameItem: FC<GameItemProps> = ({ game }) => {
           mt={4}
           w="100%"
           justifyContent="center"
-          variantColor={game.currentPlayer === user?.uid ? 'teal.400' : 'purple.400'}
+          variantColor={
+            game.winner
+              ? game.winner === user?.uid
+                ? 'green.300'
+                : 'red.300'
+              : game.currentPlayer === user?.uid
+              ? 'teal.400'
+              : 'purple.400'
+          }
         >
           <Text
             whiteSpace="nowrap"
@@ -37,7 +45,15 @@ const GameItem: FC<GameItemProps> = ({ game }) => {
             color="white"
             textShadow="1px 1px 0px rgba(0,0,0,0.2)"
           >
-            {game.currentPlayer === user?.uid ? 'Your turn' : game.state === 'PLAYING' ? 'View game' : 'Place ships'}
+            {game.winner
+              ? game.winner === user?.uid
+                ? 'You won'
+                : 'Your opponent won'
+              : game.currentPlayer === user?.uid
+              ? 'Your turn'
+              : game.state === 'PLAYING'
+              ? 'View game'
+              : 'Place ships'}
           </Text>
         </RaisedButton>
       </Link>
