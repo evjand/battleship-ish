@@ -205,6 +205,7 @@ const GamePlacementGrid: FC<{
                 height: heightForShip(ship),
                 top: calculateYPosition(ship),
                 left: calculateXPosition(ship),
+                touchAction: 'none',
               }}
               borderRadius="full"
               transform="translate3d(8px, 8px, 0px)"

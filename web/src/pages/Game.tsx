@@ -8,6 +8,32 @@ import RaisedButton from '../components/UI/RaisedButton'
 import UserContext from '../context/userContext'
 import { firestore, functions } from '../firebaseApp'
 
+import UIFx from 'uifx'
+import notificationSound from '../sounds/notification3.wav'
+import hitSound from '../sounds/hit.wav'
+import missSound from '../sounds/miss.wav'
+import notAllowedSound from '../sounds/notallowed.wav'
+
+const notificationFx = new UIFx(notificationSound, {
+  volume: 0.05,
+  throttleMs: 500,
+})
+
+const hitFx = new UIFx(hitSound, {
+  volume: 0.5,
+  throttleMs: 500,
+})
+
+const missFx = new UIFx(missSound, {
+  volume: 0.5,
+  throttleMs: 500,
+})
+
+const notAllowedFx = new UIFx(notAllowedSound, {
+  volume: 0.5,
+  throttleMs: 500,
+})
+
 const xy = Array.from(Array(10)).map(() => Array.from(Array(10)).map(() => false))
 
 const shipLength = [5, 4, 3, 3, 2]
@@ -22,7 +48,7 @@ const Game = () => {
   const [canSendPlacement, setCanSendPlacement] = useState<boolean>(false)
   const [isTrying, setIsTrying] = useState<boolean>(false)
   const [showOwnBoard, setShowOwnBoard] = useState<boolean>(false)
-  const [personalPlacmenet, setPersonalPlacement] = useState<{ positions: string[] }[]>([])
+  const [personalPlacement, setPersonalPlacement] = useState<{ positions: string[] }[]>([])
   const [gridWidth, setGridWidth] = useState<number>(0)
 
   useEffect(() => {
@@ -33,6 +59,7 @@ const Game = () => {
       .doc(gameId)
       .onSnapshot((snapshot) => {
         const game: Game = { id: snapshot.id, ...snapshot.data()! } as Game
+        notificationFx.play()
         setGame(game)
       })
 
@@ -43,7 +70,10 @@ const Game = () => {
       .doc(gameId)
       .get()
       .then((snapshot) => {
-        setPersonalPlacement(snapshot.data()!.placement)
+        console.log(snapshot.data())
+        if (snapshot.data()!.placement) {
+          setPersonalPlacement(snapshot.data()!.placement)
+        }
       })
       .catch((err) => {
         console.log(err)
@@ -93,6 +123,7 @@ const Game = () => {
   const trySquare = async (square: string) => {
     //functions.useFunctionsEmulator('http://localhost:5001')
     if (game?.currentPlayer !== user?.uid || isTrying) {
+      notAllowedFx.play()
       toast({
         title: 'Not your turn.',
         description: "Couldn't fire rocket, its not your turn.",
@@ -107,12 +138,9 @@ const Game = () => {
         const response = await trySquareFunc({ square, gameId })
         const { isHit, gameIsWon } = response.data
         if (isHit) {
-          toast({
-            title: 'You hit one of the ships',
-            status: 'info',
-            duration: 3000,
-            isClosable: true,
-          })
+          hitFx.play()
+        } else {
+          missFx.play()
         }
         if (gameIsWon) {
           toast({
@@ -230,7 +258,7 @@ const Game = () => {
                     />
                   ))
                 })}
-                {personalPlacmenet.map((ship, index) => {
+                {personalPlacement.map((ship, index) => {
                   return (
                     <Box
                       style={{

@@ -33,3 +33,5 @@ interface HitShip {
   hits: Square[]
   sunk: boolean
 }
+
+declare module '*.wav'
